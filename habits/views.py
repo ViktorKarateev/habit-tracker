@@ -3,10 +3,13 @@ from .models import Habit
 from .serializers import HabitSerializer
 from rest_framework import generics
 from habit_tracker.pagination import HabitPagination
+from .permissions import IsOwnerOrReadOnly
 
 class HabitViewSet(viewsets.ModelViewSet):
+
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
     serializer_class = HabitSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
 
     def get_queryset(self):
         return Habit.objects.filter(user=self.request.user)
