@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'habits',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -122,6 +123,9 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'habit_tracker.pagination.HabitPagination',
     'PAGE_SIZE': 5
 }
