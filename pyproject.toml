@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "habit-tracker"
+version = "0.1.0"
+description = ""
+authors = ["karat <karateev.92@gmail.com >"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+django = "^5.2.5"
+djangorestframework = "^3.16.1"
+python-dotenv = "^1.1.1"
+drf-yasg = "^1.21.10"
+django-cors-headers = "^4.7.0"
+celery = "^5.5.3"
+redis = "^6.4.0"
+requests = "^2.32.4"
+flake8 = "^7.3.0"
+coverage = "^7.10.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
