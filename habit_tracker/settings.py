@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'habits',
     'users',
     'notifications',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
@@ -56,18 +57,20 @@ ROOT_URLCONF = 'habit_tracker.urls'
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,  # ← ДОЛЖНО быть True
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",  # ← ОБЯЗАТЕЛЬНО
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'habit_tracker.wsgi.application'
 
@@ -148,4 +151,15 @@ CELERY_BEAT_SCHEDULE = {
         "task": "notifications.tasks.send_due_habits",
         "schedule": crontab(),  # каждую минуту
     },
+}
+
+SWAGGER_SETTINGS = {
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "Вставляй ровно так: Bearer <ACCESS_TOKEN>",
+        }
+    }
 }
