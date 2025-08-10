@@ -46,7 +46,7 @@ def send_due_habits():
         # Пытаемся отправить
         ok = send_telegram_message(chat_id, f"Напоминание: {h.action} в {h.place} — сейчас!")
         if ok:
-            h.last_reminded_at = today
+            h.last_reminded_at = today  # ← добавить эту строку
             h.save(update_fields=["last_reminded_at"])
             sent += 1
 
