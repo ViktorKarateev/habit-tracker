@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
-from views import HabitViewSet, PublicHabitListView
+from .views import HabitViewSet, PublicHabitListView
 
 
 router = DefaultRouter()

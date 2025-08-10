@@ -20,6 +20,8 @@ class Habit(models.Model):
         related_name='linked_to',
         verbose_name="Связанная привычка"
     )
+    created_at = models.DateField(auto_now_add=True, verbose_name="Создано")
+    last_reminded_at = models.DateField(null=True, blank=True, verbose_name="Последнее напоминание")
     periodicity = models.PositiveSmallIntegerField(default=1, verbose_name="Периодичность (в днях)")
     reward = models.CharField(max_length=255, null=True, blank=True, verbose_name="Вознаграждение")
     execution_time = models.PositiveSmallIntegerField(verbose_name="Время на выполнение (в секундах)")
