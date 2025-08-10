@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 
@@ -138,3 +139,9 @@ CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:63
 CELERY_TIMEZONE = TIME_ZONE  # если у тебя уже стоит TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60  # safety
+CELERY_BEAT_SCHEDULE = {
+    "send-due-habits-every-minute": {
+        "task": "notifications.tasks.send_due_habits",
+        "schedule": crontab(),  # каждую минуту
+    },
+}
