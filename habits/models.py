@@ -1,30 +1,55 @@
+# habits/models.py
 from django.contrib.auth import get_user_model
-from django.db import models
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator
+from django.db import models
 
 User = get_user_model()
 
 
 class Habit(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='habits', verbose_name="Пользователь")
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="habits",
+        verbose_name="Пользователь",
+    )
     place = models.CharField(max_length=255, verbose_name="Место")
     time = models.TimeField(verbose_name="Время")
     action = models.CharField(max_length=255, verbose_name="Действие")
+
     is_pleasant = models.BooleanField(default=False, verbose_name="Приятная привычка")
+
     linked_habit = models.ForeignKey(
-        'self',
+        "self",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        limit_choices_to={'is_pleasant': True},
-        related_name='linked_to',
-        verbose_name="Связанная привычка"
+        limit_choices_to={"is_pleasant": True},
+        related_name="linked_to",
+        verbose_name="Связанная привычка",
     )
+
     created_at = models.DateField(auto_now_add=True, verbose_name="Создано")
-    last_reminded_at = models.DateField(null=True, blank=True, verbose_name="Последнее напоминание")
-    periodicity = models.PositiveSmallIntegerField(default=1, verbose_name="Периодичность (в днях)")
-    reward = models.CharField(max_length=255, null=True, blank=True, verbose_name="Вознаграждение")
-    execution_time = models.PositiveSmallIntegerField(verbose_name="Время на выполнение (в секундах)")
+    last_reminded_at = models.DateField(
+        null=True, blank=True, verbose_name="Последнее напоминание"
+    )
+
+    periodicity = models.PositiveSmallIntegerField(
+        default=1,
+        validators=[MaxValueValidator(7)],
+        verbose_name="Периодичность (в днях)",
+    )
+
+    reward = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="Вознаграждение"
+    )
+
+    execution_time = models.PositiveSmallIntegerField(
+        validators=[MaxValueValidator(120)],
+        verbose_name="Время на выполнение (в секундах)",
+    )
+
     is_public = models.BooleanField(default=False, verbose_name="Публичная привычка")
 
     def __str__(self):
@@ -33,29 +58,33 @@ class Habit(models.Model):
     class Meta:
         verbose_name = "Привычка"
         verbose_name_plural = "Привычки"
-
+        # Чёткий порядок для пагинации/тестов
+        ordering = ["-created_at", "id"]
 
     def clean(self):
-        # Приятная привычка не может иметь связанной привычки или награды
-        if self.is_pleasant and (self.reward or self.linked_habit):
-            raise ValidationError("Приятная привычка не может иметь ни награды, ни связанной привычки.")
+        errors = {}
 
-        # Поля reward и linked_habit — взаимоисключающие
+        # Приятная привычка не может иметь награду или ссылку
+        if self.is_pleasant and self.reward:
+            errors["reward"] = "Приятная привычка не может иметь награду."
+        if self.is_pleasant and self.linked_habit:
+            errors["linked_habit"] = "Приятная привычка не может иметь связанную привычку."
+
+        # Нельзя одновременно указать награду и связанную привычку
         if self.reward and self.linked_habit:
-            raise ValidationError("Нельзя одновременно указать и награду, и связанную привычку.")
+            errors["linked_habit"] = "Нельзя одновременно указать и награду, и связанную привычку."
 
-        # Только приятные привычки могут быть связаны
+        # Связанная привычка должна быть приятной
         if self.linked_habit and not self.linked_habit.is_pleasant:
-            raise ValidationError("Можно указать только приятную привычку в качестве связанной.")
+            errors["linked_habit"] = "Можно указать только приятную привычку в качестве связанной."
 
-        # Время выполнения не должно превышать 120 секунд
-        if self.execution_time > 120:
-            raise ValidationError("Время на выполнение не должно превышать 120 секунд.")
+        # Для НЕприятной — должна быть награда или связанная приятная (если нужно жёстко)
+        if not self.is_pleasant and not (self.reward or self.linked_habit):
+            errors["reward"] = "Укажите награду или связанную приятную привычку."
 
-        # Периодичность не может быть больше 7 дней
-        if self.periodicity > 7:
-            raise ValidationError("Нельзя выполнять привычку реже, чем 1 раз в 7 дней.")
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
         self.full_clean()
-        super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
