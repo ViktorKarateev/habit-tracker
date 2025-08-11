@@ -112,7 +112,7 @@ LANGUAGE_CODE = 'ru-ru'
 
 USE_L10N = True
 
-TIME_ZONE = "Europe/Moscow"
+TIME_ZONE = os.getenv("TIME_ZONE", "Europe/Moscow")
 
 USE_I18N = True
 
@@ -130,8 +130,14 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # в dev можно все
 
+# Для прода — перечисляем домены через запятую в .env, напр.:
+# CORS_ORIGINS=https://my-frontend.app,https://another.app
+CORS_ALLOWED_ORIGINS = [
+    o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [

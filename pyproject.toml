@@ -18,6 +18,7 @@ requests = "^2.32.4"
 flake8 = "^7.3.0"
 coverage = "^7.10.2"
 djangorestframework-simplejwt = "^5.5.1"
+tzdata = "^2025.2"
 
 
 [build-system]
