@@ -6,7 +6,7 @@ __pycache__/
 # Virtual env
 .env
 .venv
-
+.idea
 
 # VSCode
 .vscode/
