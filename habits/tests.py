@@ -6,7 +6,7 @@ from rest_framework.test import APIClient, APITestCase
 from habits.models import Habit
 
 User = get_user_model()
-
+API = "/api/habits/"
 
 # ===== Публичный список (/api/public/) =====
 class TestPublicHabitsAPI(TestCase):
@@ -156,3 +156,78 @@ class TestHabitValidations(APITestCase):
         r = self.client.post(API, data, format="json")
         self.assertEqual(r.status_code, 400)
         self.assertIn("linked_habit", r.data)
+
+
+class TestPermissionsCRUD(APITestCase):
+    def setUp(self):
+        self.u1 = User.objects.create_user(username="alice", password="pass1")
+        self.u2 = User.objects.create_user(username="bob", password="pass2")
+
+        now = timezone.localtime().time().replace(second=0, microsecond=0)
+        self.h1 = Habit.objects.create(
+            user=self.u1, place="дом", time=now, action="вода u1",
+            is_pleasant=False, periodicity=1, execution_time=5,
+            is_public=False, reward="чай",
+        )
+        self.h2 = Habit.objects.create(
+            user=self.u2, place="офис", time=now, action="вода u2",
+            is_pleasant=False, periodicity=1, execution_time=5,
+            is_public=False, reward="кофе",
+        )
+
+    def test_anonymous_cannot_access(self):
+        self.client.force_authenticate(user=None)  # явно без авторизации
+        r = self.client.get(API)
+        self.assertEqual(r.status_code, 401)
+
+    def test_user_sees_only_own_habits(self):
+        self.client.force_authenticate(user=self.u1)
+        r = self.client.get(API)
+        self.assertEqual(r.status_code, 200)
+        ids = [x["id"] for x in r.data["results"]]
+        self.assertIn(self.h1.id, ids)
+        self.assertNotIn(self.h2.id, ids)
+
+    def test_cannot_retrieve_foreign(self):
+        self.client.force_authenticate(user=self.u1)
+        r = self.client.get(f"{API}{self.h2.id}/")
+        self.assertEqual(r.status_code, 404)
+
+    def test_owner_can_update(self):
+        self.client.force_authenticate(user=self.u1)
+        r = self.client.patch(f"{API}{self.h1.id}/", {"place": "квартира"}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["place"], "квартира")
+
+    def test_cannot_update_foreign(self):
+        self.client.force_authenticate(user=self.u1)
+        r = self.client.patch(f"{API}{self.h2.id}/", {"place": "в другом месте"}, format="json")
+        self.assertEqual(r.status_code, 404)
+
+    def test_owner_can_delete(self):
+        self.client.force_authenticate(user=self.u1)
+        r = self.client.delete(f"{API}{self.h1.id}/")
+        self.assertEqual(r.status_code, 204)
+
+    def test_cannot_delete_foreign(self):
+        self.client.force_authenticate(user=self.u1)
+        r = self.client.delete(f"{API}{self.h2.id}/")
+        self.assertEqual(r.status_code, 404)
+
+    def test_create_forces_current_user(self):
+        self.client.force_authenticate(user=self.u1)
+        payload = {
+            "place": "дом",
+            "time": timezone.localtime().strftime("%H:%M"),
+            "action": "новая",
+            "periodicity": 1,
+            "execution_time": 10,
+            "is_public": False,
+            "is_pleasant": False,
+            "reward": "печенька",
+            "linked_habit": None,
+            "user": self.u2.id,  # попробуем подсунуть bob
+        }
+        r = self.client.post(API, payload, format="json")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(r.data["user"], self.u1.id)
