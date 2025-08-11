@@ -8,6 +8,7 @@ from habits.models import Habit
 User = get_user_model()
 API = "/api/habits/"
 
+
 # ===== Публичный список (/api/public/) =====
 class TestPublicHabitsAPI(TestCase):
     def setUp(self):
@@ -49,6 +50,7 @@ class TestPublicHabitsAPI(TestCase):
 
 # ===== Валидации создания привычек (/api/habits/) =====
 API = "/api/habits/"
+
 
 class TestHabitValidations(APITestCase):
     def setUp(self):

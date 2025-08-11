@@ -4,6 +4,7 @@ from celery import shared_task
 from habits.models import Habit
 from notifications.utils import send_telegram_message
 
+
 @shared_task
 def send_due_habits():
     """
