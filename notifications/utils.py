@@ -1,7 +1,9 @@
 import os
 import requests
+from django.conf import settings
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
+TELEGRAM_BOT_TOKEN = settings.TELEGRAM_BOT_TOKEN
 
 
 def send_telegram_message(chat_id: str, text: str) -> bool:
