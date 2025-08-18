@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    command: >
+      bash -c "
+      python manage.py migrate --noinput &&
+      python manage.py collectstatic --noinput &&
+      gunicorn habit_tracker.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120
+      "
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:15
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  redis:
+    image: redis:7
+    restart: always
+
+  celery:
+    build: .
+    command: celery -A habit_tracker worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - redis
+      - db
+
+  celery-beat:
+    build: .
+    command: celery -A habit_tracker beat --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - redis
+      - db
+
+volumes:
+  postgres_data:
