@@ -155,8 +155,11 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # ← вот это надо
+    ],
     'DEFAULT_PAGINATION_CLASS': 'habit_tracker.pagination.HabitPagination',
-    'PAGE_SIZE': 5
+    'PAGE_SIZE': 5,
 }
 
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
@@ -172,6 +175,7 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 SWAGGER_SETTINGS = {
+    "USE_SESSION_AUTH": False,
     "SECURITY_DEFINITIONS": {
         "Bearer": {
             "type": "apiKey",
@@ -181,3 +185,5 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
