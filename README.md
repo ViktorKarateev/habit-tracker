@@ -16,6 +16,7 @@
 - JWT (SimpleJWT)
 - poetry
 - Flake8 / coverage
+- GitHub Actions (CI/CD)
 
 ---
 
@@ -69,6 +70,74 @@ poetry run python manage.py createsuperuser
 ```bash
 poetry run celery -A habit_tracker worker -l info
 poetry run celery -A habit_tracker beat -l info
+```
+
+---
+
+## 🐙 CI/CD (GitHub Actions)
+
+Проект содержит пример CI/CD workflow `.github/workflows/deploy.yml`.
+
+Workflow выполняет:
+
+- установку зависимостей через poetry,
+- запуск тестов (`pytest`) с переменными из GitHub Secrets,
+- (эмуляция) деплоя на сервер через `ssh-action` — **заглушка** (сервер отсутствует).
+
+Пример используется для соответствия критериям курсовой.
+
+```yaml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run tests
+        run: poetry run pytest
+        env:
+          DJANGO_SETTINGS_MODULE: habit_tracker.settings
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DEBUG: True
+
+      - name: Deploy to remote server
+        if: success()
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/your_user/habit-tracker
+            git pull
+            source .venv/bin/activate
+            poetry install
+            python manage.py migrate
+            sudo systemctl restart habit_tracker
 ```
 
 ---
@@ -170,6 +239,7 @@ poetry run coverage report -m
 - ✅ Покрытие тестами ≥ 80%
 - ✅ Flake8 = 100%
 - ✅ Docker + docker-compose + инструкции по запуску
+- ✅ CI/CD Workflow через GitHub Actions (эмуляция деплоя)
 
 ---
 
