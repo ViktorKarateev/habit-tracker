@@ -6,6 +6,14 @@ on:
       - develop
       - main
       - master
+      - feature/deploy_ci_cd
+
+  pull_request:
+    branches:
+      - develop
+      - main
+      - master
+      - feature/deploy_ci_cd
 
 jobs:
   build-and-deploy:
