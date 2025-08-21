@@ -51,9 +51,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/your_user/habit-tracker
+            cd /home/ubuntu/habit-tracker
             git pull
-            source .venv/bin/activate
-            poetry install
-            python manage.py migrate
-            sudo systemctl restart habit_tracker
+            ~/.local/bin/poetry install
+            ~/.local/bin/poetry run python manage.py migrate
