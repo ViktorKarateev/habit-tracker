@@ -54,7 +54,7 @@ jobs:
 
       # 8. Проверяем сборку Docker-образов
       - name: Build Docker images
-        run: docker-compose -f docker-compose.yml build
+        run: docker compose -f docker-compose.yml build
 
       # 9. Деплой на сервер
       - name: Deploy to remote server
@@ -67,7 +67,7 @@ jobs:
           script: |
             cd /home/ubuntu/habit-tracker
             git pull
-            docker-compose down
-            docker-compose up --build -d
-            docker-compose exec web python manage.py migrate
-            docker-compose exec web python manage.py collectstatic --noinput
+            docker compose down
+            docker compose up --build -d
+            docker compose exec web python manage.py migrate
+            docker compose exec web python manage.py collectstatic --noinput
