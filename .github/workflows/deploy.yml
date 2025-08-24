@@ -8,34 +8,36 @@ on:
       - master
       - feature/deploy_ci_cd
 
-  pull_request:
-    branches:
-      - develop
-      - main
-      - master
-      - feature/deploy_ci_cd
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Клонируем репозиторий
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2. Устанавливаем Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.13'
 
+      # 3. Устанавливаем Poetry
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      # 4. Устанавливаем зависимости
       - name: Install dependencies
         run: poetry install
 
+      # 5. Линтер Flake8
+      - name: Run Flake8
+        run: poetry run flake8
+
+      # 6. Запускаем тесты
       - name: Run tests
         run: poetry run pytest
         env:
@@ -43,6 +45,11 @@ jobs:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           DEBUG: True
 
+      # 7. Проверяем сборку Docker-образов
+      - name: Build Docker images
+        run: docker-compose -f docker-compose.yml build
+
+      # 8. Деплой на сервер
       - name: Deploy to remote server
         if: success()
         uses: appleboy/ssh-action@master
@@ -53,5 +60,7 @@ jobs:
           script: |
             cd /home/ubuntu/habit-tracker
             git pull
-            ~/.local/bin/poetry install
-            ~/.local/bin/poetry run python manage.py migrate
+            docker-compose down
+            docker-compose up --build -d
+            docker-compose exec web python manage.py migrate
+            docker-compose exec web python manage.py collectstatic --noinput
