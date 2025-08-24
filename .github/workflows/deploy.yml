@@ -45,7 +45,7 @@ jobs:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           DEBUG: True
 
-      # 7. Устанавливаем Docker + Docker Compose
+      # 7. Устанавливаем Docker и Docker Compose
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
@@ -67,7 +67,7 @@ jobs:
           script: |
             cd /home/ubuntu/habit-tracker
             git pull
-            docker compose down
-            docker compose up --build -d
-            docker compose exec web python manage.py migrate
-            docker compose exec web python manage.py collectstatic --noinput
+            docker compose -f docker-compose.yaml down
+            docker compose -f docker-compose.yaml up --build -d
+            docker compose -f docker-compose.yaml exec web python manage.py migrate
+            docker compose -f docker-compose.yaml exec web python manage.py collectstatic --noinput
