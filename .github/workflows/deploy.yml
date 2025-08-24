@@ -45,13 +45,12 @@ jobs:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           DEBUG: True
 
-      # 7. Устанавливаем Docker и Docker Compose
-      - name: Install Docker & Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io docker-compose
-          docker --version
-          docker-compose --version
+      # 7. Устанавливаем Docker + Docker Compose
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Docker Compose
+        uses: docker/setup-docker-action@v3
 
       # 8. Проверяем сборку Docker-образов
       - name: Build Docker images
