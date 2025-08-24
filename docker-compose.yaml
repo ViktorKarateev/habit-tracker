@@ -24,10 +24,8 @@ services:
     restart: always
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - .env
 
   redis:
     image: redis:7
@@ -41,9 +39,8 @@ services:
     env_file:
       - .env
     depends_on:
-      - web
-      - redis
       - db
+      - redis
 
   celery-beat:
     build: .
@@ -53,9 +50,8 @@ services:
     env_file:
       - .env
     depends_on:
-      - web
-      - redis
       - db
+      - redis
 
   nginx:
     image: nginx:latest
