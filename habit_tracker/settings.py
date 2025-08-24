@@ -78,12 +78,24 @@ WSGI_APPLICATION = 'habit_tracker.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if os.getenv("DB_NAME") and os.getenv("DB_USER"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME"),
+            "USER": os.getenv("DB_USER"),
+            "PASSWORD": os.getenv("DB_PASSWORD"),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation
@@ -143,8 +155,11 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # ← вот это надо
+    ],
     'DEFAULT_PAGINATION_CLASS': 'habit_tracker.pagination.HabitPagination',
-    'PAGE_SIZE': 5
+    'PAGE_SIZE': 5,
 }
 
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
@@ -160,6 +175,7 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 SWAGGER_SETTINGS = {
+    "USE_SESSION_AUTH": False,
     "SECURITY_DEFINITIONS": {
         "Bearer": {
             "type": "apiKey",
@@ -169,3 +185,5 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")

@@ -1,0 +1,75 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - master
+      - feature/deploy_ci_cd
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Клонируем репозиторий
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Устанавливаем Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      # 3. Устанавливаем Poetry
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # 4. Устанавливаем зависимости проекта
+      - name: Install dependencies
+        run: poetry install
+
+      # 5. Линтер Flake8
+      - name: Run Flake8
+        run: poetry run flake8
+
+      # 6. Запускаем тесты
+      - name: Run tests
+        run: poetry run pytest
+        env:
+          DJANGO_SETTINGS_MODULE: habit_tracker.settings
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DEBUG: True
+
+      # 7. Устанавливаем Docker и Docker Compose
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Docker Compose
+        uses: docker/setup-docker-action@v3
+
+      # 8. Проверяем сборку Docker-образов
+      - name: Build Docker images
+        run: docker compose -f docker-compose.yaml build
+
+      # 9. Деплой на сервер
+      - name: Deploy to remote server
+        if: success()
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu/habit-tracker
+            git pull
+            docker-compose -f docker-compose.yaml down
+            docker-compose -f docker-compose.yaml build
+            docker-compose -f docker-compose.yaml up -d
+            docker-compose -f docker-compose.yaml run --rm web python manage.py migrate
+            docker-compose -f docker-compose.yaml run --rm web python manage.py collectstatic --noinput
+
