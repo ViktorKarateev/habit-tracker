@@ -29,7 +29,7 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      # 4. Устанавливаем зависимости
+      # 4. Устанавливаем зависимости проекта
       - name: Install dependencies
         run: poetry install
 
@@ -45,11 +45,17 @@ jobs:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           DEBUG: True
 
-      # 7. Проверяем сборку Docker-образов
+      # 7. Устанавливаем Docker Compose
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      # 8. Проверяем сборку Docker-образов
       - name: Build Docker images
         run: docker-compose -f docker-compose.yml build
 
-      # 8. Деплой на сервер
+      # 9. Деплой на сервер
       - name: Deploy to remote server
         if: success()
         uses: appleboy/ssh-action@master
